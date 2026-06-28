@@ -1,10 +1,16 @@
 // Small shared helpers for the API functions.
 
+import type { Env } from "./types";
+
 export const MAX_ATTEMPTS = 6;
 export const GAME_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 export const TOKEN_TTL_SECONDS = 60 * 60 * 24; // 1 day per play session
 
-export function json(data, status = 200, extraHeaders = {}) {
+export function json(
+  data: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {}
+): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -15,7 +21,7 @@ export function json(data, status = 200, extraHeaders = {}) {
   });
 }
 
-export async function readJson(request) {
+export async function readJson(request: Request): Promise<any | null> {
   try {
     return await request.json();
   } catch {
@@ -23,9 +29,9 @@ export async function readJson(request) {
   }
 }
 
-// Reads the JWT secret from the environment. In local dev wrangler.toml provides a
-// throwaway default; in production it must be set via `wrangler pages secret put JWT_SECRET`.
-export function getSecret(env) {
+// Reads the JWT secret from the environment. In local dev .dev.vars provides a throwaway
+// default; in production it must be set via `wrangler pages secret put JWT_SECRET`.
+export function getSecret(env: Env): string {
   return env.JWT_SECRET || "dev-insecure-secret-change-me";
 }
 
@@ -34,7 +40,7 @@ const ID_ALPHABET =
 
 // Short, URL-safe game id. 6 base62 chars ≈ 5.7e10 combinations — short enough to share
 // comfortably, with collisions handled by a check-and-retry in the create handler.
-export function genId(length = 6) {
+export function genId(length = 6): string {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
   let out = "";
@@ -42,7 +48,7 @@ export function genId(length = 6) {
   return out;
 }
 
-export function clientIp(request) {
+export function clientIp(request: Request): string {
   return request.headers.get("cf-connecting-ip") || "0.0.0.0";
 }
 
@@ -50,7 +56,12 @@ export function clientIp(request) {
 // allowed, false if the limit is exceeded. KV is eventually consistent, so this is a
 // soft throttle (good enough to make brute-forcing impractical at friends-scale), not a
 // hard guarantee.
-export async function rateLimit(kv, key, limit, windowSeconds) {
+export async function rateLimit(
+  kv: KVNamespace | undefined,
+  key: string,
+  limit: number,
+  windowSeconds: number
+): Promise<boolean> {
   if (!kv) return true;
   const window = Math.floor(Date.now() / 1000 / windowSeconds);
   const k = `rl:${key}:${window}`;

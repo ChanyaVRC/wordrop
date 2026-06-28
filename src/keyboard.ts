@@ -1,18 +1,33 @@
-// On-screen keyboard + physical keyboard input. Emits "letter", "enter", "backspace"
-// events via the callback passed to create().
+// On-screen keyboard + physical keyboard input. Emits key events via the callback passed
+// to createKeyboard().
 
-const ROWS = [
+import type { Mark } from "./api";
+
+export type KeyEvent =
+  | { type: "letter"; value: string }
+  | { type: "enter" }
+  | { type: "backspace" };
+
+export interface Keyboard {
+  applyResult(guess: string, marks: Mark[]): void;
+  destroy(): void;
+}
+
+const ROWS: string[][] = [
   ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
   ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
   ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "BACK"],
 ];
 
 // Color priority so a key never downgrades (correct > present > absent).
-const RANK = { absent: 0, present: 1, correct: 2 };
+const RANK: Record<Mark, number> = { absent: 0, present: 1, correct: 2 };
 
-export function createKeyboard(container, onKey) {
+export function createKeyboard(
+  container: HTMLElement,
+  onKey: (e: KeyEvent) => void
+): Keyboard {
   container.innerHTML = "";
-  const keyEls = new Map();
+  const keyEls = new Map<string, HTMLButtonElement>();
 
   for (const row of ROWS) {
     const rowEl = document.createElement("div");
@@ -31,13 +46,13 @@ export function createKeyboard(container, onKey) {
     container.appendChild(rowEl);
   }
 
-  function dispatch(key) {
+  function dispatch(key: string): void {
     if (key === "ENTER") onKey({ type: "enter" });
     else if (key === "BACK") onKey({ type: "backspace" });
     else onKey({ type: "letter", value: key });
   }
 
-  function onPhysical(e) {
+  function onPhysical(e: KeyboardEvent): void {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === "Enter") dispatch("ENTER");
     else if (e.key === "Backspace") dispatch("BACK");
@@ -46,12 +61,11 @@ export function createKeyboard(container, onKey) {
   document.addEventListener("keydown", onPhysical);
 
   return {
-    // Apply per-key colors from a guess result.
-    applyResult(guess, marks) {
+    applyResult(guess: string, marks: Mark[]): void {
       for (let i = 0; i < guess.length; i++) {
         const el = keyEls.get(guess[i]);
         if (!el) continue;
-        const current = el.dataset.state;
+        const current = el.dataset.state as Mark | undefined;
         if (!current || RANK[marks[i]] > RANK[current]) {
           el.dataset.state = marks[i];
           el.classList.remove("correct", "present", "absent");
@@ -59,7 +73,7 @@ export function createKeyboard(container, onKey) {
         }
       }
     },
-    destroy() {
+    destroy(): void {
       document.removeEventListener("keydown", onPhysical);
     },
   };

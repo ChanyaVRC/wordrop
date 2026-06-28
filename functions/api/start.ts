@@ -1,9 +1,10 @@
-// POST /api/start  { id }  ->  { token, attemptsLeft }
+// POST /api/start  { id }  ->  { token, attemptsLeft, maxAttempts }
 //
 // Confirms the puzzle exists and issues a signed session token. This endpoint is the main
 // rate-limit choke point: minting fresh sessions is how a brute-forcer would reset the
 // 6-guess cap, so we throttle it per IP.
 
+import type { Env } from "../_shared/types";
 import {
   json,
   readJson,
@@ -12,10 +13,10 @@ import {
   rateLimit,
   MAX_ATTEMPTS,
   TOKEN_TTL_SECONDS,
-} from "../_shared/util.js";
-import { sign } from "../_shared/jwt.js";
+} from "../_shared/util";
+import { sign } from "../_shared/jwt";
 
-export async function onRequestPost({ request, env }) {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const kv = env.WORDLE_KV;
   if (!kv) return json({ error: "server_misconfigured" }, 500);
 
@@ -23,7 +24,7 @@ export async function onRequestPost({ request, env }) {
   if (!ok) return json({ error: "rate_limited", message: "アクセスが多すぎます。少し待ってください。" }, 429);
 
   const body = await readJson(request);
-  const id = body && typeof body.id === "string" ? body.id : "";
+  const id: string = body && typeof body.id === "string" ? body.id : "";
   if (!/^[0-9A-Za-z]{1,40}$/.test(id)) return json({ error: "invalid_id" }, 400);
 
   const stored = await kv.get(`game:${id}`);
@@ -36,4 +37,4 @@ export async function onRequestPost({ request, env }) {
   );
 
   return json({ token, attemptsLeft: MAX_ATTEMPTS, maxAttempts: MAX_ATTEMPTS });
-}
+};

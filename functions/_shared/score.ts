@@ -1,14 +1,16 @@
 // Wordle color scoring (standard two-pass algorithm with duplicate-letter handling).
 //
-// Returns an array of 5 marks, one per guess position:
 //   "correct" — right letter, right position (green)
 //   "present" — letter is in the answer but in another position (yellow)
 //   "absent"  — letter is not in the answer (or all its instances are already accounted for)
 //
 // Both `answer` and `guess` are expected to be 5-letter uppercase strings.
-export function score(answer, guess) {
-  const result = new Array(5).fill("absent");
-  const counts = {};
+
+export type Mark = "correct" | "present" | "absent";
+
+export function score(answer: string, guess: string): Mark[] {
+  const result: Mark[] = new Array(5).fill("absent");
+  const counts: Record<string, number> = {};
 
   // Pass 1: lock in greens and tally the remaining answer letters.
   for (let i = 0; i < 5; i++) {
@@ -32,6 +34,6 @@ export function score(answer, guess) {
   return result;
 }
 
-export function isSolved(marks) {
+export function isSolved(marks: Mark[]): boolean {
   return marks.every((m) => m === "correct");
 }

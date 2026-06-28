@@ -1,9 +1,10 @@
-// POST /api/create  { word }  ->  { id }
+// POST /api/create  { word } | { random: true }  ->  { id }
 //
 // Validates the setter's word against the Collins dictionary and stores it in KV under a
 // fresh opaque id. The word itself is never returned to any client.
 
-import { isValidWord, randomWord } from "../_shared/words.js";
+import type { Env } from "../_shared/types";
+import { isValidWord, randomWord } from "../_shared/words";
 import {
   json,
   readJson,
@@ -11,9 +12,9 @@ import {
   clientIp,
   rateLimit,
   GAME_TTL_SECONDS,
-} from "../_shared/util.js";
+} from "../_shared/util";
 
-export async function onRequestPost({ request, env }) {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const kv = env.WORDLE_KV;
   if (!kv) return json({ error: "server_misconfigured" }, 500);
 
@@ -23,7 +24,7 @@ export async function onRequestPost({ request, env }) {
 
   const body = await readJson(request);
 
-  let raw;
+  let raw: string;
   if (body && body.random === true) {
     // Server picks a random Collins word; the client never sees which one.
     raw = randomWord();
@@ -41,10 +42,10 @@ export async function onRequestPost({ request, env }) {
   }
 
   // Short ids mean collisions are possible (if unlikely), so retry on an existing key.
-  let id;
+  let id = genId();
   for (let i = 0; i < 5; i++) {
-    id = genId();
     if (!(await kv.get(`game:${id}`))) break;
+    id = genId();
   }
 
   await kv.put(
@@ -54,4 +55,4 @@ export async function onRequestPost({ request, env }) {
   );
 
   return json({ id });
-}
+};

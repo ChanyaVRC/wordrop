@@ -7,13 +7,21 @@
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-function b64urlEncode(bytes) {
+export interface SessionPayload {
+  id: string;
+  attempts: number;
+  solved: boolean;
+  iat?: number;
+  exp?: number;
+}
+
+function b64urlEncode(bytes: Uint8Array): string {
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function b64urlDecode(str) {
+function b64urlDecode(str: string): Uint8Array {
   str = str.replace(/-/g, "+").replace(/_/g, "/");
   while (str.length % 4) str += "=";
   const bin = atob(str);
@@ -22,11 +30,11 @@ function b64urlDecode(str) {
   return bytes;
 }
 
-function b64urlJson(obj) {
+function b64urlJson(obj: unknown): string {
   return b64urlEncode(enc.encode(JSON.stringify(obj)));
 }
 
-async function importKey(secret) {
+function importKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
     enc.encode(secret),
@@ -37,7 +45,7 @@ async function importKey(secret) {
 }
 
 // Constant-time-ish comparison of two equal-length byte arrays.
-function bytesEqual(a, b) {
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
@@ -45,9 +53,13 @@ function bytesEqual(a, b) {
 }
 
 // Sign a payload. `ttlSeconds` controls the exp claim (default 1 day).
-export async function sign(payload, secret, ttlSeconds = 86400) {
+export async function sign(
+  payload: Omit<SessionPayload, "iat" | "exp">,
+  secret: string,
+  ttlSeconds = 86400
+): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const body = { ...payload, iat: now, exp: now + ttlSeconds };
+  const body: SessionPayload = { ...payload, iat: now, exp: now + ttlSeconds };
   const header = { alg: "HS256", typ: "JWT" };
   const signingInput = `${b64urlJson(header)}.${b64urlJson(body)}`;
   const key = await importKey(secret);
@@ -57,16 +69,19 @@ export async function sign(payload, secret, ttlSeconds = 86400) {
   return `${signingInput}.${b64urlEncode(sig)}`;
 }
 
-// Verify a token. Returns the payload object on success, or null on any failure
+// Verify a token. Returns the payload on success, or null on any failure
 // (bad shape, bad signature, expired).
-export async function verify(token, secret) {
+export async function verify(
+  token: unknown,
+  secret: string
+): Promise<SessionPayload | null> {
   if (typeof token !== "string") return null;
   const parts = token.split(".");
   if (parts.length !== 3) return null;
   const [h, p, s] = parts;
   const signingInput = `${h}.${p}`;
   const key = await importKey(secret);
-  let expected;
+  let expected: Uint8Array;
   try {
     expected = new Uint8Array(
       await crypto.subtle.sign("HMAC", key, enc.encode(signingInput))
@@ -74,7 +89,7 @@ export async function verify(token, secret) {
   } catch {
     return null;
   }
-  let given;
+  let given: Uint8Array;
   try {
     given = b64urlDecode(s);
   } catch {
@@ -82,9 +97,9 @@ export async function verify(token, secret) {
   }
   if (!bytesEqual(expected, given)) return null;
 
-  let payload;
+  let payload: SessionPayload;
   try {
-    payload = JSON.parse(dec.decode(b64urlDecode(p)));
+    payload = JSON.parse(dec.decode(b64urlDecode(p))) as SessionPayload;
   } catch {
     return null;
   }

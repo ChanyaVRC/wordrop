@@ -1,6 +1,7 @@
 name = "wordrop"
 compatibility_date = "2024-09-23"
-pages_build_output_dir = "public"
+# Vite builds the frontend into dist/. Functions in functions/ are compiled by wrangler.
+pages_build_output_dir = "dist"
 
 # JWT_SECRET は production では Pages の secret として設定する（[vars] には書かない —
 # secret と同名の var はデプロイ時に "Binding name already in use" で衝突する）:

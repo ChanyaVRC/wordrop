@@ -4,9 +4,10 @@
 // token (with the attempt counter incremented). The answer is never returned — not on a
 // win, not on a loss.
 
-import { isValidWord } from "../_shared/words.js";
-import { score, isSolved } from "../_shared/score.js";
-import { verify, sign } from "../_shared/jwt.js";
+import type { Env } from "../_shared/types";
+import { isValidWord } from "../_shared/words";
+import { score, isSolved } from "../_shared/score";
+import { verify, sign } from "../_shared/jwt";
 import {
   json,
   readJson,
@@ -15,9 +16,14 @@ import {
   rateLimit,
   MAX_ATTEMPTS,
   TOKEN_TTL_SECONDS,
-} from "../_shared/util.js";
+} from "../_shared/util";
 
-export async function onRequestPost({ request, env }) {
+interface StoredGame {
+  word: string;
+  createdAt: number;
+}
+
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const kv = env.WORDLE_KV;
   if (!kv) return json({ error: "server_misconfigured" }, 500);
 
@@ -45,7 +51,7 @@ export async function onRequestPost({ request, env }) {
 
   const stored = await kv.get(`game:${payload.id}`);
   if (!stored) return json({ error: "not_found", message: "このパズルは存在しないか期限切れです。" }, 410);
-  const { word } = JSON.parse(stored);
+  const { word } = JSON.parse(stored) as StoredGame;
 
   const feedback = score(word, guess);
   const solved = isSolved(feedback);
@@ -63,4 +69,4 @@ export async function onRequestPost({ request, env }) {
     attemptsLeft: MAX_ATTEMPTS - attempts,
     token,
   });
-}
+};

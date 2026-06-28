@@ -1,37 +1,55 @@
 // Entry point: routes between the "create" and "play" views and wires up shared UI
 // (toast, result modal). A `?g=<id>` query param means play mode; otherwise create mode.
 
-import { createPuzzle, createRandom, startGame } from "./api.js";
-import { initGame } from "./game.js";
+import "./styles.css";
+import { createPuzzle, createRandom, startGame, ApiError } from "./api";
+import { initGame, type GameUi, type ResultInfo } from "./game";
+
+function el<T extends HTMLElement>(id: string): T {
+  const node = document.getElementById(id);
+  if (!node) throw new Error(`missing #${id}`);
+  return node as T;
+}
 
 const views = {
-  create: document.getElementById("create-view"),
-  play: document.getElementById("play-view"),
-  status: document.getElementById("status-view"),
+  create: el("create-view"),
+  play: el("play-view"),
+  status: el("status-view"),
 };
 
-function showView(name) {
-  for (const [key, el] of Object.entries(views)) el.hidden = key !== name;
+function showView(name: keyof typeof views): void {
+  for (const [key, node] of Object.entries(views)) {
+    node.hidden = key !== name;
+  }
 }
 
 // ===== Toast =====
-const toastEl = document.getElementById("toast");
-let toastTimer = null;
-function toast(msg) {
+const toastEl = el("toast");
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+function toast(msg: string): void {
   toastEl.textContent = msg;
   toastEl.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (toastEl.hidden = true), 1600);
 }
 
-// ===== Result modal =====
-const modal = document.getElementById("modal");
-const modalTitle = document.getElementById("modal-title");
-const modalSub = document.getElementById("modal-sub");
-const modalGrid = document.getElementById("modal-grid");
-const modalShare = document.getElementById("modal-share");
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-function showResult({ won, tries, maxAttempts, grid, shareText }) {
+// ===== Result modal =====
+const modal = el("modal");
+const modalTitle = el("modal-title");
+const modalSub = el("modal-sub");
+const modalGrid = el("modal-grid");
+const modalShare = el<HTMLButtonElement>("modal-share");
+
+function showResult({ won, tries, maxAttempts, grid, shareText }: ResultInfo): void {
   modalTitle.textContent = won ? "クリア！🎉" : "ざんねん…";
   modalSub.textContent = won
     ? `${tries}/${maxAttempts} で正解！`
@@ -44,41 +62,32 @@ function showResult({ won, tries, maxAttempts, grid, shareText }) {
   modal.hidden = false;
 }
 
-const ui = { toast, showResult };
-
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
-}
+const ui: GameUi = { toast, showResult };
 
 // ===== Create view =====
-function setupCreateView() {
+function setupCreateView(): void {
   showView("create");
-  const form = document.getElementById("create-form");
-  const input = document.getElementById("create-input");
-  const randomBtn = document.getElementById("random-word");
-  const errorEl = document.getElementById("create-error");
-  const shareBox = document.getElementById("share-box");
-  const shareUrlEl = document.getElementById("share-url");
-  const copyBtn = document.getElementById("copy-url");
-  const shareNativeBtn = document.getElementById("share-native");
-  const playSelf = document.getElementById("play-self");
+  const form = el<HTMLFormElement>("create-form");
+  const input = el<HTMLInputElement>("create-input");
+  const randomBtn = el<HTMLButtonElement>("random-word");
+  const errorEl = el("create-error");
+  const shareBox = el("share-box");
+  const shareUrlEl = el<HTMLInputElement>("share-url");
+  const copyBtn = el<HTMLButtonElement>("copy-url");
+  const shareNativeBtn = el<HTMLButtonElement>("share-native");
+  const playSelf = el<HTMLAnchorElement>("play-self");
 
   input.addEventListener("input", () => {
     input.value = input.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 5);
     errorEl.hidden = true;
   });
 
-  function showError(msg) {
+  function showError(msg: string): void {
     errorEl.textContent = msg;
     errorEl.hidden = false;
   }
 
-  function showShare(id) {
+  function showShare(id: string): void {
     const url = `${location.origin}/?g=${id}`;
     shareUrlEl.value = url;
     playSelf.href = url;
@@ -99,7 +108,7 @@ function setupCreateView() {
       const { id } = await createPuzzle(word);
       showShare(id);
     } catch (err) {
-      showError(err.message || "作成に失敗しました。");
+      showError((err as ApiError).message || "作成に失敗しました。");
     }
   });
 
@@ -109,7 +118,7 @@ function setupCreateView() {
       input.value = "";
       showShare(id);
     } catch (err) {
-      showError(err.message || "作成に失敗しました。");
+      showError((err as ApiError).message || "作成に失敗しました。");
     }
   });
 
@@ -128,27 +137,28 @@ function setupCreateView() {
 }
 
 // ===== Play view =====
-async function setupPlayView(id) {
+async function setupPlayView(id: string): Promise<void> {
   showView("status");
-  const statusText = document.getElementById("status-text");
-  const statusHome = document.getElementById("status-home");
+  const statusText = el("status-text");
+  const statusHome = el("status-home");
   try {
     const { token, maxAttempts } = await startGame(id);
     showView("play");
     initGame({ id, token, maxAttempts, ui });
   } catch (err) {
+    const e = err as ApiError;
     statusText.textContent =
-      err.status === 404
+      e.status === 404
         ? "このパズルは存在しないか、期限切れです。"
-        : err.message || "読み込みに失敗しました。";
+        : e.message || "読み込みに失敗しました。";
     statusHome.hidden = false;
   }
 }
 
 // ===== Boot =====
-function boot() {
+function boot(): void {
   const id = new URLSearchParams(location.search).get("g");
-  if (id) setupPlayView(id);
+  if (id) void setupPlayView(id);
   else setupCreateView();
 }
 
