@@ -7,7 +7,7 @@ import { createKeyboard } from "./keyboard.js";
 const WORD_LENGTH = 5;
 const EMOJI = { correct: "🟩", present: "🟨", absent: "⬛" };
 
-export function initGame({ token, maxAttempts, ui }) {
+export function initGame({ id, token, maxAttempts, ui }) {
   const boardEl = document.getElementById("board");
   const messageEl = document.getElementById("message");
   const keyboardEl = document.getElementById("keyboard");
@@ -141,8 +141,9 @@ export function initGame({ token, maxAttempts, ui }) {
   function endGame(won) {
     const tries = history.length;
     const grid = buildGrid();
+    const url = `${location.origin}/?g=${id}`;
     const shareText =
-      `Wordrop ${won ? tries : "X"}/${maxAttempts}\n\n${grid}`;
+      `Wordrop ${won ? tries : "X"}/${maxAttempts} #${id}\n\n${grid}\n\n${url}`;
     setTimeout(() => {
       ui.showResult({
         won,

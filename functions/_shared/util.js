@@ -32,8 +32,9 @@ export function getSecret(env) {
 const ID_ALPHABET =
   "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-// Opaque, URL-safe game id. 10 base62 chars ≈ 59 bits of entropy — collisions negligible.
-export function genId(length = 10) {
+// Short, URL-safe game id. 6 base62 chars ≈ 5.7e10 combinations — short enough to share
+// comfortably, with collisions handled by a check-and-retry in the create handler.
+export function genId(length = 6) {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
   let out = "";

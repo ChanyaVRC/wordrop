@@ -135,7 +135,7 @@ async function setupPlayView(id) {
   try {
     const { token, maxAttempts } = await startGame(id);
     showView("play");
-    initGame({ token, maxAttempts, ui });
+    initGame({ id, token, maxAttempts, ui });
   } catch (err) {
     statusText.textContent =
       err.status === 404

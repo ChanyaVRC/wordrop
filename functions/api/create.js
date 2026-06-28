@@ -40,7 +40,13 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  const id = genId();
+  // Short ids mean collisions are possible (if unlikely), so retry on an existing key.
+  let id;
+  for (let i = 0; i < 5; i++) {
+    id = genId();
+    if (!(await kv.get(`game:${id}`))) break;
+  }
+
   await kv.put(
     `game:${id}`,
     JSON.stringify({ word: raw, createdAt: Date.now() }),
