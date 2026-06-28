@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Wordrop">
+  <!-- 背景（アプリと同じダーク） -->
+  <rect width="64" height="64" rx="14" fill="#121213"/>
+  <!-- Wordle のパレットを散らした小タイル -->
+  <rect x="8"  y="8"  width="20" height="20" rx="4" fill="#538d4e"/>
+  <rect x="36" y="8"  width="20" height="20" rx="4" fill="#3a3a3c"/>
+  <rect x="36" y="36" width="20" height="20" rx="4" fill="#b59f3b"/>
+  <!-- メインの緑タイル＋W -->
+  <rect x="6" y="34" width="24" height="24" rx="5" fill="#538d4e"/>
+  <text x="18" y="47" text-anchor="middle" dominant-baseline="central"
+        font-family="'Helvetica Neue',Arial,sans-serif" font-weight="800" font-size="17" fill="#ffffff">W</text>
+</svg>
