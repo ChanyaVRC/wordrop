@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#121213"/>
+
+  <text x="600" y="236" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif"
+        font-weight="800" font-size="120" fill="#ffffff">Wordrop</text>
+  <text x="600" y="306" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif"
+        font-weight="400" font-size="34" fill="#9aa0a6">Make a word puzzle. Share the link. Play together.</text>
+
+  <!-- Wordle 風タイル "WORDS"。文字はタイル中央(y=434)にベースライン補正(+20)して配置 -->
+  <g font-family="'Helvetica Neue',Arial,sans-serif" font-weight="800" font-size="56" fill="#ffffff" text-anchor="middle">
+    <rect x="336" y="386" width="96" height="96" rx="10" fill="#538d4e"/>
+    <text x="384" y="454">W</text>
+    <rect x="444" y="386" width="96" height="96" rx="10" fill="#3a3a3c"/>
+    <text x="492" y="454">O</text>
+    <rect x="552" y="386" width="96" height="96" rx="10" fill="#b59f3b"/>
+    <text x="600" y="454">R</text>
+    <rect x="660" y="386" width="96" height="96" rx="10" fill="#538d4e"/>
+    <text x="708" y="454">D</text>
+    <rect x="768" y="386" width="96" height="96" rx="10" fill="#3a3a3c"/>
+    <text x="816" y="454">S</text>
+  </g>
+</svg>
