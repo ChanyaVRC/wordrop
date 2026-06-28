@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wordrop</title>
+  <meta name="description" content="好きな単語で出題し、URL を渡して友達と遊べる単語当てゲーム。" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="title">Wordrop</h1>
+  </header>
+
+  <main id="app">
+    <!-- ===== 出題（作成）画面 ===== -->
+    <section id="create-view" class="view" hidden>
+      <p class="lead">好きな5文字の英単語を出題して、URLを友達に共有しよう。</p>
+      <form id="create-form" class="create-form" autocomplete="off">
+        <input
+          id="create-input"
+          class="word-input"
+          type="text"
+          inputmode="latin"
+          maxlength="5"
+          placeholder="APPLE"
+          aria-label="出題する単語"
+          spellcheck="false"
+        />
+        <button id="create-submit" class="btn primary" type="submit">リンクを生成</button>
+        <button id="random-word" class="btn ghost" type="button">ランダムな単語で出題</button>
+      </form>
+      <p id="create-error" class="error" role="alert" hidden></p>
+
+      <div id="share-box" class="share-box" hidden>
+        <p class="share-label">共有用URL（この中に答えは含まれていません）</p>
+        <div class="share-row">
+          <input id="share-url" class="share-url" type="text" readonly />
+          <button id="copy-url" class="btn" type="button">コピー</button>
+        </div>
+        <div class="share-actions">
+          <button id="share-native" class="btn ghost" type="button" hidden>共有…</button>
+          <a id="play-self" class="btn ghost" href="#">自分で試す →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== プレイ画面 ===== -->
+    <section id="play-view" class="view" hidden>
+      <div id="board" class="board" aria-label="ゲームボード"></div>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+      <div id="keyboard" class="keyboard"></div>
+    </section>
+
+    <!-- ===== 読み込み中 / エラー ===== -->
+    <section id="status-view" class="view" hidden>
+      <p id="status-text" class="status-text">読み込み中…</p>
+      <a id="status-home" class="btn ghost" href="/" hidden>出題する →</a>
+    </section>
+  </main>
+
+  <!-- 終了モーダル -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-card">
+      <h2 id="modal-title" class="modal-title"></h2>
+      <p id="modal-sub" class="modal-sub"></p>
+      <pre id="modal-grid" class="modal-grid"></pre>
+      <div class="modal-actions">
+        <button id="modal-share" class="btn primary" type="button">結果をコピー</button>
+        <a id="modal-new" class="btn ghost" href="/">自分も出題する →</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

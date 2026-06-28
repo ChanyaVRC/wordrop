@@ -1,0 +1,14 @@
+{
+  "name": "wordrop",
+  "version": "1.0.0",
+  "description": "Wordrop — 好きな単語で出題し、URL共有で遊べる単語当てゲーム（答えはサーバー保持で覗き見不可）",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  }
+}

@@ -1,0 +1,16 @@
+name = "wordrop"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "public"
+
+# JWT_SECRET は production では Pages の secret として設定する（[vars] には書かない —
+# secret と同名の var はデプロイ時に "Binding name already in use" で衝突する）:
+#   npx wrangler pages secret put JWT_SECRET
+# ローカル開発用の値は .dev.vars に書く（git 管理外）。未設定でもコードが
+# 開発用フォールバック値を使うので動作する。
+
+# KV namespace for storing puzzles (answer + metadata) and rate-limit counters.
+# Create it once, then paste the returned id below:
+#   npx wrangler kv namespace create WORDLE_KV
+[[kv_namespaces]]
+binding = "WORDLE_KV"
+id = "12900e327d1d4fbd81b67f9dd30bdcf8"
