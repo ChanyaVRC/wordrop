@@ -1,7 +1,6 @@
 # Wordrop
 
 [![CI](https://github.com/ChanyaVRC/wordrop/actions/workflows/ci.yml/badge.svg)](https://github.com/ChanyaVRC/wordrop/actions/workflows/ci.yml)
-[![Deploy](https://github.com/ChanyaVRC/wordrop/actions/workflows/deploy.yml/badge.svg)](https://github.com/ChanyaVRC/wordrop/actions/workflows/deploy.yml)
 
 好きな5文字の英単語を出題し、生成されたURLを友達に共有して遊べる単語当てゲーム。
 **答えはサーバー（Cloudflare KV）にだけ保存され、クライアントには一切渡らない**ので、
@@ -81,24 +80,26 @@ npm run deploy
 
 KV のバインド（binding 名 `WORDLE_KV`）は wrangler.toml に記載済みです。
 
-## CI/CD（GitHub Actions）
+## 自動デプロイ（Cloudflare Pages の Git 連携）
 
-- **CI** (`.github/workflows/ci.yml`): main 以外への push と PR で型チェック(`npm run check`)＋ビルドを実行
-- **CD** (`.github/workflows/deploy.yml`): `main` への push（または手動実行）で型チェック・ビルド後、
-  `wrangler pages deploy` で Cloudflare Pages 本番へ自動デプロイ
+ダッシュボードで GitHub リポジトリを接続すると、`main` への push ごとに Cloudflare が
+自動でビルド＆デプロイします（API トークンや GitHub Secrets は不要）。
 
-### 必要な GitHub Secrets
+1. **Workers と Pages** → **作成** → **Pages** → **Git に接続**
+2. リポジトリ `ChanyaVRC/wordrop` を選択
+3. ビルド設定:
+   - フレームワークのプリセット: `なし（None）`
+   - **ビルドコマンド**: `npm run build`
+   - **ビルド出力ディレクトリ**: `dist`
+4. **環境変数**で署名鍵を追加（**暗号化**して secret に）:
+   - `JWT_SECRET` = ランダムな長い文字列
+5. デプロイ後、プロジェクトの **設定 → 関数 → KV 名前空間バインディング** で
+   変数名 `WORDLE_KV` を作成済み namespace に割り当て → 再デプロイ
 
-リポジトリの **Settings → Secrets and variables → Actions** に以下を登録してください。
+> `JWT_SECRET` のランダム値は `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` で生成。
 
-| Secret | 取得方法 |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare ダッシュボード → My Profile → API Tokens → Create Token。**"Cloudflare Pages — Edit"** 権限を付与 |
-| `CLOUDFLARE_ACCOUNT_ID` | ダッシュボードのアカウント ID（Workers & Pages の概要などに表示） |
-
-> 初回のみ、先に一度 `npm run deploy` をローカル実行して Pages プロジェクト `wordrop` を作成し、
-> `JWT_SECRET` secret と KV バインドを設定しておくと確実です（以降は push で自動デプロイ）。
-> `JWT_SECRET` はビルド時には不要で、Cloudflare 側に設定済みの値がランタイムで使われます。
+`.github/workflows/ci.yml` の CI（型チェック＋ビルド）は引き続き main 以外の push / PR で動きます。
+デプロイは Cloudflare 側が担当するので、GitHub Actions でのデプロイは行いません。
 
 ## セキュリティ上の注意 / 限界
 
