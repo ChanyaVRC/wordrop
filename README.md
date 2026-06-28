@@ -1,5 +1,8 @@
 # Wordrop
 
+[![CI](https://github.com/ChanyaVRC/wordrop/actions/workflows/ci.yml/badge.svg)](https://github.com/ChanyaVRC/wordrop/actions/workflows/ci.yml)
+[![Deploy](https://github.com/ChanyaVRC/wordrop/actions/workflows/deploy.yml/badge.svg)](https://github.com/ChanyaVRC/wordrop/actions/workflows/deploy.yml)
+
 好きな5文字の英単語を出題し、生成されたURLを友達に共有して遊べる単語当てゲーム。
 **答えはサーバー（Cloudflare KV）にだけ保存され、クライアントには一切渡らない**ので、
 URL・通信・DevTools のどこを見ても答えの文字列は読めません。
@@ -77,8 +80,25 @@ npm run deploy
 ```
 
 KV のバインド（binding 名 `WORDLE_KV`）は wrangler.toml に記載済みです。
-Cloudflare ダッシュボードの Git 連携で自動デプロイする場合は、ビルドコマンドを
-`npm run build`・出力ディレクトリを `dist` に設定し、同じ binding 名で KV をバインドしてください。
+
+## CI/CD（GitHub Actions）
+
+- **CI** (`.github/workflows/ci.yml`): main 以外への push と PR で型チェック(`npm run check`)＋ビルドを実行
+- **CD** (`.github/workflows/deploy.yml`): `main` への push（または手動実行）で型チェック・ビルド後、
+  `wrangler pages deploy` で Cloudflare Pages 本番へ自動デプロイ
+
+### 必要な GitHub Secrets
+
+リポジトリの **Settings → Secrets and variables → Actions** に以下を登録してください。
+
+| Secret | 取得方法 |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare ダッシュボード → My Profile → API Tokens → Create Token。**"Cloudflare Pages — Edit"** 権限を付与 |
+| `CLOUDFLARE_ACCOUNT_ID` | ダッシュボードのアカウント ID（Workers & Pages の概要などに表示） |
+
+> 初回のみ、先に一度 `npm run deploy` をローカル実行して Pages プロジェクト `wordrop` を作成し、
+> `JWT_SECRET` secret と KV バインドを設定しておくと確実です（以降は push で自動デプロイ）。
+> `JWT_SECRET` はビルド時には不要で、Cloudflare 側に設定済みの値がランタイムで使われます。
 
 ## セキュリティ上の注意 / 限界
 
