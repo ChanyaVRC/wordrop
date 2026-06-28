@@ -48,6 +48,22 @@ const modalTitle = el("modal-title");
 const modalSub = el("modal-sub");
 const modalGrid = el("modal-grid");
 const modalShare = el<HTMLButtonElement>("modal-share");
+const modalClose = el<HTMLButtonElement>("modal-close");
+const reopenBtn = el<HTMLButtonElement>("result-reopen");
+
+// Once a game ends we keep the result available so the modal can be dismissed (to look at
+// your own board) and reopened via the "結果を見る" button.
+let hasResult = false;
+
+function openModal(): void {
+  modal.hidden = false;
+  reopenBtn.hidden = true;
+}
+
+function closeModal(): void {
+  modal.hidden = true;
+  reopenBtn.hidden = !hasResult;
+}
 
 function showResult({ won, tries, maxAttempts, grid, shareText }: ResultInfo): void {
   modalTitle.textContent = won ? "クリア！🎉" : "ざんねん…";
@@ -59,8 +75,19 @@ function showResult({ won, tries, maxAttempts, grid, shareText }: ResultInfo): v
     await copyText(shareText);
     toast("結果をコピーしました");
   };
-  modal.hidden = false;
+  hasResult = true;
+  openModal();
 }
+
+modalClose.addEventListener("click", closeModal);
+reopenBtn.addEventListener("click", openModal);
+// Dismiss on backdrop click and Esc.
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !modal.hidden) closeModal();
+});
 
 const ui: GameUi = { toast, showResult };
 

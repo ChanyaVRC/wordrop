@@ -191,6 +191,12 @@ body {
   color: var(--muted);
 }
 
+.reopen {
+  display: block;
+  margin: 4px auto 0;
+  max-width: 200px;
+}
+
 /* ===== キーボード ===== */
 .keyboard {
   margin-top: auto;
@@ -231,6 +237,7 @@ body {
   padding: 16px;
 }
 .modal-card {
+  position: relative;
   background: #1a1a1b;
   border: 1px solid var(--tile-border);
   border-radius: 12px;
@@ -239,6 +246,21 @@ body {
   max-width: 340px;
   text-align: center;
 }
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--fg); background: var(--tile-border); }
 .modal-title { margin: 0 0 6px; font-size: 1.5rem; }
 .modal-sub { margin: 0 0 12px; color: var(--muted); }
 .modal-grid {
